@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       store.resetToSeed();
       return NextResponse.json({
         success: true,
-        message: 'Demo state reset to initial seed (Ammini Amma scenario)',
+        message: 'Demo state reset to initial seed (Rehana Hidayathulla scenario)',
         state: store.getState()
       });
     }
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
           // Neighbor Suma responds "She's fine" -> Incident resolved
           const activeInc = store.getIncidents(targetElderId).find(i => i.stage !== 'resolved');
           if (activeInc) {
-            store.respondToIncident(activeInc.id, 'c-suma-neighbor', 'ok', 'Checked on Ammini. She was gardening in back yard.');
+            store.respondToIncident(activeInc.id, 'c-suma-neighbor', 'ok', 'Checked on Rehana. She was gardening in back yard.');
           }
           break;
 

@@ -252,7 +252,7 @@ export default function ElderProfileEscalationPage() {
 
             <div className="relative shrink-0 flex flex-col items-center">
               <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl overflow-hidden shadow-xs bg-surface-container-low relative border border-outline-variant/40">
-                <div className="w-full h-full flex items-center justify-center bg-primary-fixed text-on-primary-fixed text-4xl font-extrabold">{(elder?.full_name || 'Ammini Amma').split(' ').map(name => name[0]).join('').slice(0, 2).toUpperCase()}</div>
+                <div className="w-full h-full flex items-center justify-center bg-primary-fixed text-on-primary-fixed text-4xl font-extrabold">{(elder?.full_name || 'Rehana Hidayathulla').split(' ').map(name => name[0]).join('').slice(0, 2).toUpperCase()}</div>
                 <div className="absolute bottom-1 right-1 bg-surface-container-lowest/90 px-2 py-0.5 rounded text-primary text-[11px] font-extrabold shadow-xs">
                   ID 402
                 </div>
@@ -267,10 +267,10 @@ export default function ElderProfileEscalationPage() {
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h1 className="text-2xl md:text-3xl font-extrabold text-primary tracking-tight">
-                    {elder?.full_name || 'Ammini Amma'}
+                    {elder?.full_name || 'Rehana Hidayathulla'}
                   </h1>
                   <span className="px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-xs font-bold">
-                    {elder?.age || 78} Years • Female
+                    {elder?.age || 92} Years • Female
                   </span>
                 </div>
 

@@ -92,7 +92,7 @@ npm run build
 ## 🗺️ District Coverage (28 Active Elder Nodes)
 
 Kerala Care Net currently covers 28 detailed care nodes across all 14 districts of Kerala:
-- **Pathanamthitta**: Ward 4 Kozhencherry (Ammini Amma, K.P. Mathew, Devaki Amma, Varghese Cherian)
+- **Pathanamthitta**: Ward 4 Kozhencherry (Rehana Hidayathulla, K.P. Mathew, Devaki Amma, Varghese Cherian)
 - **Thiruvananthapuram**: Ward 12 Kowdiar (Dr. K. Radhakrishnan, Kamala Devi)
 - **Ernakulam / Kochi**: Ward 15 Kakkanad (Mariamma Joseph, Sebastian Varghese)
 - **Thrissur**: Ward 7 Swaraj Round (P.V. Menon, Sarojini Amma)

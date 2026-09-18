@@ -143,17 +143,12 @@ export function CareNetGlobe({ className = '', onSelectNode, selectedNodeId }: C
     if (onSelectNode) onSelectNode(node);
   };
 
-  const [sosFlash, setSosFlash] = useState(false);
-
   // Listen to SOS broadcast events
   useEffect(() => {
     const handleSosEvent = (event: Event) => {
       const customEvent = event as CustomEvent<{ location?: { latitude: number; longitude: number }; elderId?: string }>;
       const loc = customEvent.detail?.location;
       const targetNode = nodes.find((n) => n.id === customEvent.detail?.elderId) || nodes[0];
-
-      setSosFlash(true);
-      setTimeout(() => setSosFlash(false), 3000);
 
       if (targetNode) {
         handleSelectNode({
@@ -520,16 +515,6 @@ export function CareNetGlobe({ className = '', onSelectNode, selectedNodeId }: C
       {/* Map Canvas */}
       <div ref={mapContainer} className="min-h-[36rem] w-full sm:min-h-[42rem]" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(12,36,35,0.4),transparent_20%,transparent_75%,rgba(12,36,35,0.65))]" />
-
-      {/* SOS Flash Red Vignette Overlay */}
-      {sosFlash && (
-        <div className="pointer-events-none absolute inset-0 z-30 animate-pulse bg-red-600/30 border-8 border-red-600 shadow-[inset_0_0_80px_rgba(220,38,38,0.8)] transition-all duration-300 flex items-center justify-center">
-          <div className="bg-red-700/90 text-white px-6 py-3 rounded-2xl font-black text-lg tracking-wider uppercase shadow-2xl border border-white/40 flex items-center gap-2">
-            <span className="material-symbols-outlined text-[24px] animate-bounce">warning</span>
-            SOS Emergency Signal Broadcasted!
-          </div>
-        </div>
-      )}
 
       {/* Top Left Title Card */}
       <div className="absolute left-4 top-16 max-w-[19rem] rounded-2xl border border-white/25 bg-[#0e2c2b]/85 p-4 text-white shadow-xl backdrop-blur-md sm:left-6 sm:top-20">

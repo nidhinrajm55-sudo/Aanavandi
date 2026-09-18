@@ -302,7 +302,7 @@ export default function WardDashboard() {
                 </div>
                 <div className="space-y-0.5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-bold text-on-surface">Ammini Amma (78) — Ladder Safeguard Calibration Active</span>
+                    <span className="text-sm font-bold text-on-surface">Rehana Hidayathulla (92) — Ladder Safeguard Calibration Active</span>
                     <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold">Goodwill Shield</span>
                   </div>
                   <p className="text-xs text-on-surface-variant max-w-4xl leading-relaxed">
@@ -312,7 +312,7 @@ export default function WardDashboard() {
               </div>
               <button
                 type="button"
-                onClick={() => alert('Opening Ladder Calibration Matrix for Ammini Amma:\nPillbox baseline offset +15m.\nKudumbashree link priority 2.\nEscalation cooldown shield ACTIVE.')}
+                onClick={() => alert('Opening Ladder Calibration Matrix for Rehana Hidayathulla:\nPillbox baseline offset +15m.\nKudumbashree link priority 2.\nEscalation cooldown shield ACTIVE.')}
                 className="px-3.5 py-2 rounded-lg bg-surface-container-lowest text-primary text-xs font-bold shadow-xs hover:bg-surface transition-all flex items-center justify-center gap-1.5 shrink-0"
               >
                 <span className="material-symbols-outlined text-[18px]">tune</span>
@@ -502,10 +502,10 @@ export default function WardDashboard() {
                   {/* Elder Summary Card */}
                   <div className="bg-surface-container-low rounded-xl p-4 space-y-3">
                     <div className="flex items-start gap-3">
-                      <div className="w-14 h-14 rounded-xl bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-bold text-lg shrink-0 shadow-xs border border-outline-variant/40">{(selectedElder?.full_name || 'Ammini Amma').split(' ').map(name => name[0]).join('').slice(0, 2).toUpperCase()}</div>
+                      <div className="w-14 h-14 rounded-xl bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-bold text-lg shrink-0 shadow-xs border border-outline-variant/40">{(selectedElder?.full_name || 'Rehana Hidayathulla').split(' ').map(name => name[0]).join('').slice(0, 2).toUpperCase()}</div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
-                          <h4 className="text-base font-bold text-on-surface truncate">{selectedElder?.full_name || 'Ammini Amma'}</h4>
+                          <h4 className="text-base font-bold text-on-surface truncate">{selectedElder?.full_name || 'Rehana Hidayathulla'}</h4>
                           <span className="text-xs px-2 py-0.5 rounded bg-error text-on-error font-bold">Score {selectedElder?.concern_score || 64}</span>
                         </div>
                         <p className="text-xs text-on-surface-variant truncate">{selectedElder?.address || 'Kunnumpurathu House, Ward 4'}</p>

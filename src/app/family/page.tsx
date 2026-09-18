@@ -113,7 +113,7 @@ export default function FamilyDashboard() {
               Family view · Sharjah (UTC+4)
             </div>
             <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-              Monitoring: {elder?.full_name || 'Ammini Amma'}
+              Monitoring: {elder?.full_name || 'Rehana Hidayathulla'}
             </h1>
             <p className="mt-1 text-xs text-white/75">
               {elder?.address} · Ward 4, Kozhencherry

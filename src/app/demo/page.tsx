@@ -56,7 +56,7 @@ export default function DemoSimulatorPage() {
             Scripted Incident Replay Panel (§14 Script)
           </h1>
           <p className="text-xs text-on-surface-variant mt-1">
-            Replay the live scenario: Ammini Amma (78) in Kozhencherry, neighbor Suma next door, ASHA worker Reeja, and son Manoj in Sharjah.
+            Replay the live scenario: Rehana Hidayathulla (92) in Kozhencherry, neighbor Suma next door, ASHA worker Reeja, and son Manoj in Sharjah.
           </p>
         </div>
 
@@ -74,7 +74,7 @@ export default function DemoSimulatorPage() {
             </div>
 
             <div>
-              <h3 className="font-extrabold text-base text-on-surface">{elder?.full_name || 'Ammini Amma'}</h3>
+              <h3 className="font-extrabold text-base text-on-surface">{elder?.full_name || 'Rehana Hidayathulla'}</h3>
               <p className="text-xs text-on-surface-variant">{elder?.address}</p>
             </div>
 

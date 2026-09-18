@@ -8,8 +8,8 @@ import { CardSkeleton } from '@/components/Skeletons';
 
 export default function NeighborView() {
   const [incident, setIncident] = useState<Incident | null>(null);
-  const [elderName, setElderName] = useState('Ammini Amma');
-  const [elderAge, setElderAge] = useState(78);
+  const [elderName, setElderName] = useState('Rehana Hidayathulla');
+  const [elderAge, setElderAge] = useState(92);
   const [elderAddress, setElderAddress] = useState('Kunnumpurathu House (Next Door House #402)');
   const [elderWard, setElderWard] = useState('Ward 4 Kozhencherry');
   const [neighborContact, setNeighborContact] = useState<Contact | null>(null);
@@ -185,7 +185,7 @@ export default function NeighborView() {
             {step === 'going' && (
               <div className="space-y-4 bg-surface-container-low border border-outline-variant/30 p-4 rounded-xl">
                 <p className="text-xs font-bold text-primary text-center uppercase tracking-wider">
-                  What did you find when visiting Ammini?
+                  What did you find when visiting Rehana?
                 </p>
 
                 <div className="grid grid-cols-1 gap-3">

@@ -51,17 +51,17 @@ export const SEED_AMMINI_CONTACTS: Contact[] = [
 export const SEED_ELDERS: Elder[] = [
   {
     id: 'elder-ammini-78',
-    full_name: 'Ammini Amma',
-    age: 78,
+    full_name: 'Rehana Hidayathulla',
+    age: 92,
     address: 'Lakshmi Nivas, Ward 4, Kozhencherry, Pathanamthitta',
     ward_id: 'ward-4-pathanamthitta',
     primary_language: 'ml',
-    conditions_notes: 'Hypertension, Mild Osteoarthritis, Morning BP Medication (Amlodipine 5mg)',
+    conditions_notes: 'Hypertension, Cardiac monitoring, Morning BP & Insulin, High Attention Priority',
     baseline_established_at: new Date(Date.now() - 21 * 86400000).toISOString(),
     created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
     contacts: SEED_AMMINI_CONTACTS,
-    current_stage: 'normal',
-    concern_score: 0,
+    current_stage: 'critical',
+    concern_score: 95,
     last_signal_at: new Date(Date.now() - 3600000).toISOString(),
     ward: { id: 'ward-4-pathanamthitta', name: 'Ward 4 - Kozhencherry', panchayat: 'Pathanamthitta Grama Panchayat' }
   },
@@ -399,7 +399,7 @@ export const SEED_TIMELINE: TimelineEntry[] = [
     id: 't-1',
     elder_id: 'elder-ammini-78',
     entry_type: 'signal',
-    actor_name: 'Ammini Amma',
+    actor_name: 'Rehana Hidayathulla',
     note: 'Smart Pillbox opened for morning dose (Amlodipine 5mg)',
     visibility: 'all',
     occurred_at: new Date(Date.now() - 25 * 3600000).toISOString()
@@ -409,7 +409,7 @@ export const SEED_TIMELINE: TimelineEntry[] = [
     elder_id: 'elder-ammini-78',
     entry_type: 'note',
     actor_name: 'Suma Nextdoor (Neighbor)',
-    note: 'Visited Ammini in afternoon. Shared homemade appam. She felt cheerful.',
+    note: 'Visited Rehana in afternoon. Shared homemade appam. She felt cheerful.',
     visibility: 'all',
     occurred_at: new Date(Date.now() - 20 * 3600000).toISOString()
   },

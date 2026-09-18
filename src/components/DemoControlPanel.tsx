@@ -29,7 +29,7 @@ export function DemoControlPanel({ onStateChanged }: DemoControlPanelProps) {
       if (res.ok) {
         if (action === 'reset') {
           setCurrentStep(0);
-          setStatusLog('System reset: Ammini Amma baseline active (Normal Routine).');
+          setStatusLog('System reset: Rehana Hidayathulla baseline active (Critical Routine).');
         } else {
           setCurrentStep(step || 1);
           switch (step) {
