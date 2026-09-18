@@ -26,15 +26,20 @@ type CareNetGlobeProps = {
   selectedNodeId?: string | null;
 };
 
-const KERALA_VIEW = {
-  center: [76.3, 10.0] as [number, number],
-  zoom: 8.2,
-  pitch: 45,
-  bearing: -10,
+const getInitialGlobeView = () => {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  return {
+    center: [76.5, 14.0] as [number, number],
+    zoom: isMobile ? 2.1 : 2.8,
+    pitch: 30,
+    bearing: 0,
+  };
 };
 
+const KERALA_VIEW = getInitialGlobeView();
+
 const KERALA_LOCALITIES = [
-  { id: 'all', label: 'All Kerala', center: [76.3, 10.0] as [number, number], zoom: 8.2, pitch: 45 },
+  { id: 'all', label: 'All Kerala (3D Globe)', center: [76.5, 14.0] as [number, number], zoom: typeof window !== 'undefined' && window.innerWidth < 640 ? 2.1 : 2.8, pitch: 30 },
   { id: 'ward-4-pathanamthitta', label: 'Pathanamthitta', center: [76.7074, 9.3375] as [number, number], zoom: 13.5, pitch: 55 },
   { id: 'ward-12-trivandrum', label: 'Trivandrum', center: [76.9557, 8.5241] as [number, number], zoom: 13.8, pitch: 55 },
   { id: 'ward-15-ernakulam', label: 'Kochi', center: [76.2673, 9.9312] as [number, number], zoom: 13.5, pitch: 55 },
@@ -236,6 +241,54 @@ export function CareNetGlobe({ className = '', onSelectNode, selectedNodeId }: C
       mapRef.current = null;
     };
   }, []);
+
+  // Revolving globe auto-rotation effect
+  const userInteractingRef = useRef(false);
+  const spinReqRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!isReady || !mapRef.current) return;
+    const map = mapRef.current;
+
+    const spin = () => {
+      if (userInteractingRef.current || !mapRef.current) return;
+      const zoom = map.getZoom();
+      // Only revolve when zoomed out at globe preview level (zoom < 6.5)
+      if (zoom < 6.5) {
+        const center = map.getCenter();
+        center.lng += 0.08;
+        map.jumpTo({ center });
+      }
+      spinReqRef.current = requestAnimationFrame(spin);
+    };
+
+    const handleUserStart = () => {
+      userInteractingRef.current = true;
+    };
+
+    const handleUserEnd = () => {
+      setTimeout(() => {
+        userInteractingRef.current = false;
+      }, 2500);
+    };
+
+    map.on('mousedown', handleUserStart);
+    map.on('touchstart', handleUserStart);
+    map.on('dragstart', handleUserStart);
+    map.on('mouseup', handleUserEnd);
+    map.on('touchend', handleUserEnd);
+
+    spinReqRef.current = requestAnimationFrame(spin);
+
+    return () => {
+      if (spinReqRef.current) cancelAnimationFrame(spinReqRef.current);
+      map.off('mousedown', handleUserStart);
+      map.off('touchstart', handleUserStart);
+      map.off('dragstart', handleUserStart);
+      map.off('mouseup', handleUserEnd);
+      map.off('touchend', handleUserEnd);
+    };
+  }, [isReady]);
 
   // Change basemap style
   useEffect(() => {
