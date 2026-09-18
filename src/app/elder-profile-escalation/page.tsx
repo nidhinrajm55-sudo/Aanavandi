@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Elder, TimelineEntry } from '@/types/carenet';
+import { EscalationStepper } from '@/components/EscalationStepper';
+import { Toast } from '@/components/Toast';
+import { HeaderSkeleton } from '@/components/Skeletons';
 
 export default function ElderProfileEscalationPage() {
   const [elder, setElder] = useState<Elder | null>(null);
@@ -58,13 +61,15 @@ export default function ElderProfileEscalationPage() {
     };
   }, []);
 
+  const targetElderId = elder?.id || 'elder-ammini-78';
+
   const handleManualOverride = async () => {
     try {
       const res = await fetch('/api/signals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          elderId: 'elder-ammini-78',
+          elderId: targetElderId,
           signalType: 'volunteer_confirmed_ok',
           source: 'volunteer',
           metadata: { note: 'Manual check-in override - verified elder safe' }
@@ -74,7 +79,7 @@ export default function ElderProfileEscalationPage() {
         const data = await res.json().catch(() => null);
         throw new Error(data?.error || 'Manual override could not be completed.');
       }
-      showToast('Incident Overridden: Ammini verified safe. Ladder de-escalated to Normal.');
+      showToast(`Incident Overridden: ${elder?.full_name || 'Elder'} verified safe. Ladder de-escalated.`);
       await fetchElderData();
     } catch (e) {
       console.error(e);
@@ -88,7 +93,7 @@ export default function ElderProfileEscalationPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          elderId: 'elder-ammini-78',
+          elderId: targetElderId,
           signalType: 'call_missed',
           source: 'simulated_call',
           metadata: { note: 'Triggered automated callback verification' }
@@ -98,7 +103,7 @@ export default function ElderProfileEscalationPage() {
         const data = await res.json().catch(() => null);
         throw new Error(data?.error || 'Automated callback could not be triggered.');
       }
-      showToast('Triggered Automated Malayalam Callback to Ammini Amma (+91 94472...)');
+      showToast(`Triggered Automated Callback to ${elder?.full_name || 'Elder'}`);
       await fetchElderData();
     } catch (e) {
       console.error(e);
@@ -116,7 +121,7 @@ export default function ElderProfileEscalationPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          elderId: 'elder-ammini-78',
+          elderId: targetElderId,
           note: `[${authorRole}] ${noteText}`,
           actorName: authorRole
         })
@@ -129,7 +134,7 @@ export default function ElderProfileEscalationPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            elderId: 'elder-ammini-78',
+            elderId: targetElderId,
             signalType: 'volunteer_confirmed_ok',
             source: 'volunteer',
             metadata: { note: `Note added by ${authorRole}: ${noteText}` }
@@ -162,8 +167,8 @@ export default function ElderProfileEscalationPage() {
     return (
       <div className="min-h-screen bg-surface text-on-surface">
         <Navbar />
-        <div className="max-w-7xl mx-auto px-4 py-16 text-center text-primary font-bold">
-          Loading Elder Profile & Escalation Engine...
+        <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+          <HeaderSkeleton />
         </div>
       </div>
     );
@@ -175,16 +180,36 @@ export default function ElderProfileEscalationPage() {
     <div className="min-h-screen bg-surface text-on-surface font-sans pb-16">
       <Navbar />
 
-      {errorMessage && <div className="fixed top-6 right-6 z-50 bg-error-container text-on-error-container border border-error px-4 py-3 rounded-xl text-xs font-bold">{errorMessage}</div>}
-
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-primary text-on-primary px-4 py-3 rounded-xl shadow-lg text-xs font-bold flex items-center gap-2 border border-primary-container animate-bounce">
-          <span className="material-symbols-outlined text-[18px]">info</span>
-          <span>{toastMessage}</span>
-        </div>
-      )}
+      <Toast message={toastMessage || errorMessage} type={errorMessage ? 'error' : 'success'} onClose={() => { setToastMessage(null); setErrorMessage(null); }} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        
+        {/* ESCALATION STEPPER & EXPLANATION ROW */}
+        <div className="space-y-4">
+          <EscalationStepper currentStage={elder?.current_stage} contacts={elder?.contacts} />
+
+          {/* "Why This Elder Is Flagged" Explanation & Countdown Card */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs">
+              <div className="flex items-center gap-2 text-amber-800 font-extrabold uppercase tracking-wider text-[0.7rem]">
+                <span className="material-symbols-outlined text-[18px]">rule</span>
+                Why Flagged (Anomaly Engine Summary)
+              </div>
+              <p className="mt-1.5 font-bold text-amber-950 leading-relaxed">
+                Smart Pillbox sensor signal missing since 08:15 AM baseline (1.2 hours overdue). Baseline routine expects morning BP medication check before 09:00 AM.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-xs flex flex-col justify-between">
+              <div className="flex items-center justify-between text-primary font-bold uppercase tracking-wider text-[0.68rem]">
+                <span>Next Escalation Countdown</span>
+                <span className="material-symbols-outlined text-[16px] animate-spin">hourglass_top</span>
+              </div>
+              <div className="mt-2 font-mono text-2xl font-black text-primary">07m 42s</div>
+              <p className="text-[0.65rem] text-on-surface-variant font-medium">Auto-advancing to Tier 2 (ASHA Health Worker)</p>
+            </div>
+          </div>
+        </div>
         
         {/* Breadcrumb Row */}
         <div className="flex flex-wrap items-center justify-between gap-4">

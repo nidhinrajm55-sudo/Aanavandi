@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { CareNetGlobe, CareNode } from '@/components/CareNetGlobe';
+import { Toast } from '@/components/Toast';
 
 type ElderRecord = {
   id: string;
@@ -23,7 +24,7 @@ type ElderRecord = {
 export default function LandingPage() {
   const [selectedNode, setSelectedNode] = useState<CareNode | null>(null);
   const [elders, setElders] = useState<ElderRecord[]>([]);
-  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [toastMsg, setToastMsg] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   useEffect(() => {
     fetch('/api/map')
@@ -31,7 +32,9 @@ export default function LandingPage() {
       .then((data: { nodes: ElderRecord[] }) => {
         if (data.nodes) setElders(data.nodes);
       })
-      .catch(() => {});
+      .catch(() => {
+        setToastMsg({ message: 'Unable to load care map nodes.', type: 'error' });
+      });
   }, []);
 
   const handleQuickAction = async (actionType: 'confirm_ok' | 'neighbor_check' | 'pillbox') => {
@@ -52,30 +55,33 @@ export default function LandingPage() {
         }),
       });
 
-      if (res.ok) {
-        setActionMessage(
-          actionType === 'confirm_ok'
-            ? `✅ Confirmed: ${selectedNode.fullName || selectedNode.initials} verified safe!`
-            : actionType === 'neighbor_check'
-            ? `🚨 Neighbor physical check dispatched in ${selectedNode.ward}.`
-            : `💊 Morning pillbox dose recorded for ${selectedNode.fullName || selectedNode.initials}.`
-        );
-        setTimeout(() => setActionMessage(null), 4500);
+      if (!res.ok) throw new Error('Signal response was not accepted.');
 
-        // Refresh map nodes
-        fetch('/api/map')
-          .then((r) => r.json())
-          .then((d: { nodes: ElderRecord[] }) => {
-            if (d.nodes) {
-              setElders(d.nodes);
-              const updated = d.nodes.find((n) => n.id === selectedNode.id);
-              if (updated) setSelectedNode(updated);
-            }
-          });
-      }
-    } catch {
-      setActionMessage('Action recorded.');
-      setTimeout(() => setActionMessage(null), 3000);
+      setToastMsg({
+        message:
+          actionType === 'confirm_ok'
+            ? `Verified: ${selectedNode.fullName || selectedNode.initials} confirmed safe!`
+            : actionType === 'neighbor_check'
+            ? `Neighbor physical check dispatched for ${selectedNode.ward}.`
+            : `Pillbox morning dose recorded for ${selectedNode.fullName || selectedNode.initials}.`,
+        type: 'success',
+      });
+
+      // Refresh map nodes
+      fetch('/api/map')
+        .then((r) => r.json())
+        .then((d: { nodes: ElderRecord[] }) => {
+          if (d.nodes) {
+            setElders(d.nodes);
+            const updated = d.nodes.find((n) => n.id === selectedNode.id);
+            if (updated) setSelectedNode(updated);
+          }
+        });
+    } catch (err) {
+      setToastMsg({
+        message: err instanceof Error ? err.message : 'Action could not be recorded.',
+        type: 'error',
+      });
     }
   };
 
@@ -83,22 +89,40 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-screen bg-[#061817] font-sans text-on-background selection:bg-secondary-container selection:text-on-secondary-container">
       <Navbar />
 
-      {/* Action Toast Notification */}
-      {actionMessage && (
-        <div
-          role="status"
-          className="fixed top-20 right-6 z-50 flex items-center gap-3 rounded-2xl bg-[#0e2c2b] px-5 py-4 text-sm font-bold text-white shadow-2xl border border-white/20 transition-all"
-        >
-          <span className="material-symbols-outlined text-[#34d399]">check_circle</span>
-          <span>{actionMessage}</span>
+      {/* Universal Toast Notification */}
+      <Toast message={toastMsg?.message || null} type={toastMsg?.type} onClose={() => setToastMsg(null)} />
+
+      {/* Hero Stat Strip above 3D Map */}
+      <section className="bg-[#0e2c2b] border-b border-white/10 px-4 py-2.5 text-white">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 font-bold">
+            <span className="flex h-2 w-2 rounded-full bg-[#34d399] animate-ping" />
+            <span className="font-mono text-[#34d399] uppercase tracking-wider">Kerala Care Net</span>
+            <span className="text-white/60">| 3D Living Community Monitor</span>
+          </div>
+
+          <div className="flex items-center gap-6 font-mono text-[0.72rem] text-white/80">
+            <span className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[15px] text-[#34d399]">elderly</span>
+              <strong className="text-white">16%+</strong> Elderly Demographic
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[15px] text-[#34d399]">hub</span>
+              <strong className="text-white">{elders.length || 28}</strong> Ward Nodes
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[15px] text-[#34d399]">timer</span>
+              <strong className="text-white">&lt;15m</strong> Response Window
+            </span>
+          </div>
         </div>
-      )}
+      </section>
 
       {/* FULL SCREEN 3D KERALA CARE MAP LANDING PAGE */}
       <main className="relative flex-1 w-full flex flex-col p-3 sm:p-5">
         <div className="relative flex-1 w-full rounded-[28px] overflow-hidden border border-white/10 shadow-2xl flex flex-col">
           <CareNetGlobe
-            className="flex-1 w-full h-full min-h-[calc(100vh-6rem)]"
+            className="flex-1 w-full h-full min-h-[calc(100vh-8rem)]"
             onSelectNode={(node) => setSelectedNode(node)}
             selectedNodeId={selectedNode?.id}
           />

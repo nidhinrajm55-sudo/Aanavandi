@@ -138,12 +138,17 @@ export function CareNetGlobe({ className = '', onSelectNode, selectedNodeId }: C
     if (onSelectNode) onSelectNode(node);
   };
 
+  const [sosFlash, setSosFlash] = useState(false);
+
   // Listen to SOS broadcast events
   useEffect(() => {
     const handleSosEvent = (event: Event) => {
       const customEvent = event as CustomEvent<{ location?: { latitude: number; longitude: number }; elderId?: string }>;
       const loc = customEvent.detail?.location;
       const targetNode = nodes.find((n) => n.id === customEvent.detail?.elderId) || nodes[0];
+
+      setSosFlash(true);
+      setTimeout(() => setSosFlash(false), 3000);
 
       if (targetNode) {
         handleSelectNode({
@@ -463,6 +468,16 @@ export function CareNetGlobe({ className = '', onSelectNode, selectedNodeId }: C
       <div ref={mapContainer} className="min-h-[36rem] w-full sm:min-h-[42rem]" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(12,36,35,0.4),transparent_20%,transparent_75%,rgba(12,36,35,0.65))]" />
 
+      {/* SOS Flash Red Vignette Overlay */}
+      {sosFlash && (
+        <div className="pointer-events-none absolute inset-0 z-30 animate-pulse bg-red-600/30 border-8 border-red-600 shadow-[inset_0_0_80px_rgba(220,38,38,0.8)] transition-all duration-300 flex items-center justify-center">
+          <div className="bg-red-700/90 text-white px-6 py-3 rounded-2xl font-black text-lg tracking-wider uppercase shadow-2xl border border-white/40 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[24px] animate-bounce">warning</span>
+            SOS Emergency Signal Broadcasted!
+          </div>
+        </div>
+      )}
+
       {/* Top Left Title Card */}
       <div className="absolute left-4 top-16 max-w-[19rem] rounded-2xl border border-white/25 bg-[#0e2c2b]/85 p-4 text-white shadow-xl backdrop-blur-md sm:left-6 sm:top-20">
         <div className="flex items-center gap-2 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[#abefe9]">
@@ -474,17 +489,28 @@ export function CareNetGlobe({ className = '', onSelectNode, selectedNodeId }: C
         </p>
       </div>
 
-      {/* Bottom Left Stats Pill */}
-      <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-xl border border-white/20 bg-[#0e2c2b]/90 px-3 py-2 text-[0.72rem] font-semibold text-white shadow-lg backdrop-blur sm:bottom-6 sm:left-6">
-        <span className="material-symbols-outlined text-base text-[#34d399]">location_on</span>
-        <span>{nodes.length} elders under care across Kerala wards</span>
-        <button
-          type="button"
-          onClick={resetToKerala}
-          className="ml-2 rounded-md bg-white/15 px-2 py-0.5 text-[0.65rem] font-bold hover:bg-white/30"
-        >
-          Reset View
-        </button>
+      {/* Bottom Left Stats Pill & Map Legend */}
+      <div className="absolute bottom-4 left-4 flex flex-col gap-2 sm:bottom-6 sm:left-6 z-20">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/20 bg-[#0e2c2b]/90 px-3 py-2 text-[0.72rem] font-semibold text-white shadow-lg backdrop-blur">
+          <span className="material-symbols-outlined text-base text-[#34d399]">location_on</span>
+          <span>{nodes.length} elders under care across Kerala wards</span>
+          <button
+            type="button"
+            onClick={resetToKerala}
+            className="ml-2 rounded-md bg-white/15 px-2 py-0.5 text-[0.65rem] font-bold hover:bg-white/30"
+          >
+            Reset View
+          </button>
+        </div>
+
+        {/* Node Stage Color Legend */}
+        <div className="hidden sm:flex items-center gap-3 rounded-xl border border-white/15 bg-[#0e2c2b]/80 px-3 py-1.5 text-[0.65rem] font-bold text-white/90 backdrop-blur">
+          <span className="text-white/60">Legend:</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#006a64]" /> Normal</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#d97706]" /> Soft Concern</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#c87537]" /> Needs Check</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#dc2626]" /> Critical</span>
+        </div>
       </div>
 
       {/* Selected Elder Card / Drawer (Internal fallback if parent does not handle selection) */}

@@ -5,6 +5,9 @@ import { Navbar } from '@/components/Navbar';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TimelineFeed } from '@/components/TimelineFeed';
 import { ContactLadderEditor } from '@/components/ContactLadderEditor';
+import { QuietHoursWidget } from '@/components/QuietHoursWidget';
+import { Toast } from '@/components/Toast';
+import { CardSkeleton } from '@/components/Skeletons';
 import { Elder, Contact, TimelineEntry } from '@/types/carenet';
 
 export default function FamilyDashboard() {
@@ -12,8 +15,7 @@ export default function FamilyDashboard() {
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [toastMsg, setToastMsg] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
 
   const fetchElderData = async () => {
@@ -27,10 +29,12 @@ export default function FamilyDashboard() {
       setElder(data.elder);
       setTimeline(data.timeline || []);
       setContacts(data.contacts || []);
-      setErrorMessage(null);
     } catch (err) {
       console.error('Failed to fetch family dashboard data:', err);
-      setErrorMessage(err instanceof Error ? err.message : 'Unable to load family care data.');
+      setToastMsg({
+        message: err instanceof Error ? err.message : 'Unable to load family care data.',
+        type: 'error',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -62,11 +66,17 @@ export default function FamilyDashboard() {
         })
       });
       if (!res.ok) throw new Error('Check-in could not be registered.');
-      setActionMessage('Manual check-in registered successfully.');
+      setToastMsg({
+        message: `Manual check-in logged on behalf of ${elder.full_name || 'Elder'}.`,
+        type: 'success',
+      });
       fetchElderData();
     } catch (err) {
       console.error('Error logging manual check-in:', err);
-      setActionMessage(err instanceof Error ? err.message : 'Check-in failed.');
+      setToastMsg({
+        message: err instanceof Error ? err.message : 'Check-in failed.',
+        type: 'error',
+      });
     } finally {
       setIsCheckingIn(false);
     }
@@ -76,8 +86,8 @@ export default function FamilyDashboard() {
     return (
       <div className="min-h-screen bg-surface text-on-surface">
         <Navbar />
-        <div className="max-w-7xl mx-auto px-4 py-16 text-center text-primary font-bold">
-          Loading Family Care Portal...
+        <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+          <CardSkeleton />
         </div>
       </div>
     );
@@ -87,7 +97,12 @@ export default function FamilyDashboard() {
     <div className="min-h-screen bg-surface font-sans text-on-surface pb-12">
       <Navbar />
 
+      <Toast message={toastMsg?.message || null} type={toastMsg?.type} onClose={() => setToastMsg(null)} />
+
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+
+        {/* Quiet Hours & Cross-Border Clock Widget */}
+        <QuietHoursWidget familyTimezone="Asia/Dubai" quietStart="23:00" quietEnd="07:00" />
 
         {/* Banner header for Migrant Child in Sharjah */}
         <div className="care-surface relative overflow-hidden flex flex-col gap-4 border-primary/15 bg-[linear-gradient(135deg,rgba(0,67,64,0.98),rgba(23,107,102,0.92))] p-5 text-white shadow-[0_18px_50px_rgba(0,67,64,0.18)] sm:p-6 md:flex-row md:items-center md:justify-between">
@@ -114,13 +129,6 @@ export default function FamilyDashboard() {
             {isCheckingIn ? 'Registering…' : 'Log Manual Check-in on Behalf'}
           </button>
         </div>
-
-        {(errorMessage || actionMessage) && (
-          <div className={`${errorMessage ? 'bg-error-container text-on-error-container border-error' : 'bg-secondary-container text-on-secondary-container border-secondary'} border rounded-xl p-4 text-xs font-bold flex items-center gap-2 shadow-xs`}>
-            <span className="material-symbols-outlined text-[20px]">{errorMessage ? 'error' : 'check_circle'}</span>
-            {errorMessage || actionMessage}
-          </div>
-        )}
 
         {/* Elder Overview Card & Escalation Editor */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
+import { Toast } from '@/components/Toast';
+import { TableSkeleton } from '@/components/Skeletons';
 import { Elder } from '@/types/carenet';
 
 export default function WardDashboard() {
   const [elders, setElders] = useState<Elder[]>([]);
   const [selectedElder, setSelectedElder] = useState<Elder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [toastMsg, setToastMsg] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   
   // UI filter & search states
   const [filterTab, setFilterTab] = useState<'all' | 'attention' | 'normal'>('all');
@@ -54,7 +56,10 @@ export default function WardDashboard() {
       setSelectedElder(data.elder);
     } catch (err) {
       console.error('Error fetching elder detail:', err);
-      setErrorMessage(err instanceof Error ? err.message : 'Unable to load elder details.');
+      setToastMsg({
+        message: err instanceof Error ? err.message : 'Unable to load elder details.',
+        type: 'error',
+      });
     }
   }, []);
 
@@ -65,7 +70,6 @@ export default function WardDashboard() {
       const data = await res.json();
       const wardElders: Elder[] = data.elders || [];
       setElders(wardElders);
-      setErrorMessage(null);
       if (wardElders.length > 0) {
         const targetId = typeof window !== 'undefined'
           ? new URLSearchParams(window.location.search).get('id')
@@ -79,7 +83,10 @@ export default function WardDashboard() {
       }
     } catch (err) {
       console.error('Failed to fetch ward dashboard data:', err);
-      setErrorMessage(err instanceof Error ? err.message : 'Unable to load ward registry.');
+      setToastMsg({
+        message: err instanceof Error ? err.message : 'Unable to load ward registry.',
+        type: 'error',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +104,6 @@ export default function WardDashboard() {
   const handleClearCheckIn = async () => {
     if (!selectedElder || isClearingCheckIn) return;
     setIsClearingCheckIn(true);
-    setErrorMessage(null);
     try {
       const res = await fetch('/api/signals', {
         method: 'POST',
@@ -113,10 +119,14 @@ export default function WardDashboard() {
         const data = await res.json().catch(() => null);
         throw new Error(data?.error || 'Check-in could not be cleared.');
       }
+      setToastMsg({ message: 'Safety check cleared successfully.', type: 'success' });
       await Promise.all([fetchElderDetail(selectedElder.id), fetchWardData()]);
     } catch (e) {
       console.error(e);
-      setErrorMessage(e instanceof Error ? e.message : 'Check-in could not be cleared.');
+      setToastMsg({
+        message: e instanceof Error ? e.message : 'Check-in could not be cleared.',
+        type: 'error',
+      });
     } finally {
       setIsClearingCheckIn(false);
     }
@@ -124,16 +134,15 @@ export default function WardDashboard() {
 
   const handleSaveCareNote = async () => {
     if (!careNoteText.trim()) {
-      setErrorMessage('Enter an observation note before saving.');
+      setToastMsg({ message: 'Enter an observation note before saving.', type: 'error' });
       return;
     }
     const targetElderId = selectedNoteElder || selectedElder?.id;
     if (!targetElderId) {
-      setErrorMessage('Select an elder before saving the note.');
+      setToastMsg({ message: 'Select an elder before saving the note.', type: 'error' });
       return;
     }
     setIsSubmittingNote(true);
-    setErrorMessage(null);
     try {
       const res = await fetch('/api/timeline/note', {
         method: 'POST',
@@ -148,6 +157,8 @@ export default function WardDashboard() {
         const data = await res.json().catch(() => null);
         throw new Error(data?.error || 'Observation note could not be saved.');
       }
+
+      setToastMsg({ message: 'Observation note recorded successfully.', type: 'success' });
 
       // Add to local activity feed
       setActivities(prev => [
@@ -165,7 +176,10 @@ export default function WardDashboard() {
       await Promise.all([fetchElderDetail(targetElderId), fetchWardData()]);
     } catch (e) {
       console.error('Save care note error:', e);
-      setErrorMessage(e instanceof Error ? e.message : 'Observation note could not be saved.');
+      setToastMsg({
+        message: e instanceof Error ? e.message : 'Observation note could not be saved.',
+        type: 'error',
+      });
     } finally {
       setIsSubmittingNote(false);
     }
@@ -190,13 +204,11 @@ export default function WardDashboard() {
     <div className="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-screen">
       <Navbar />
 
+      <Toast message={toastMsg?.message || null} type={toastMsg?.type} onClose={() => setToastMsg(null)} />
+
       <main className="w-full bg-surface min-h-screen">
         <div className="flex flex-col w-full">
           <div className="max-w-[1440px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-            {/* Executive Stats Header */}
-            {isLoading && <div className="bg-surface-container text-primary rounded-xl p-3 text-xs font-bold">Loading ward registry…</div>}
-            {errorMessage && <div className="bg-error-container text-on-error-container border border-error rounded-xl p-3 text-xs font-bold">{errorMessage}</div>}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               

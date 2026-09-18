@@ -2,15 +2,20 @@
 
 import React, { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
-import { Incident } from '@/types/carenet';
+import { Incident, Contact } from '@/types/carenet';
+import { Toast } from '@/components/Toast';
+import { CardSkeleton } from '@/components/Skeletons';
 
 export default function NeighborView() {
   const [incident, setIncident] = useState<Incident | null>(null);
+  const [elderName, setElderName] = useState('Ammini Amma');
+  const [elderAge, setElderAge] = useState(78);
+  const [elderAddress, setElderAddress] = useState('Kunnumpurathu House (Next Door House #402)');
+  const [elderWard, setElderWard] = useState('Ward 4 Kozhencherry');
+  const [neighborContact, setNeighborContact] = useState<Contact | null>(null);
   const [step, setStep] = useState<'idle' | 'going' | 'done'>('idle');
-  const [outcomeMsg, setOutcomeMsg] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [toastMsg, setToastMsg] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [isResponding, setIsResponding] = useState(false);
-  const [isLoggingVisit, setIsLoggingVisit] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchNeighborData = async () => {
@@ -24,11 +29,22 @@ export default function NeighborView() {
         const data = await res.json();
         const activeInc = (data.incidents || []).find((i: Incident) => i.stage !== 'resolved');
         setIncident(activeInc || null);
+        if (data.elder) {
+          setElderName(data.elder.full_name || 'Kerala Elder');
+          setElderAge(data.elder.age || 78);
+          setElderAddress(data.elder.address || 'Local Panchayat Ward');
+          setElderWard(data.elder.ward?.name || 'Ward 4');
+        }
+        // Fix Bug #3: Dynamically fetch neighbor contact ID for loaded elder
+        const foundContact = (data.contacts || []).find((c: Contact) => c.relationship === 'neighbor');
+        setNeighborContact(foundContact || null);
       }
-      setErrorMessage(null);
     } catch (err) {
       console.error('Neighbor view fetch error:', err);
-      setErrorMessage(err instanceof Error ? err.message : 'Unable to load neighbor requests.');
+      setToastMsg({
+        message: err instanceof Error ? err.message : 'Unable to load neighbor requests.',
+        type: 'error',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -48,12 +64,16 @@ export default function NeighborView() {
   const handleRespond = async (response: 'ok' | 'needs_help', note?: string) => {
     if (!incident || isResponding) return;
     setIsResponding(true);
+
+    // Fix Bug #3: Use dynamic neighbor contact ID instead of hardcoded string
+    const contactId = neighborContact?.id || `c-${incident.elder_id}-neighbor`;
+
     try {
       const res = await fetch(`/api/escalations/${incident.id}/respond`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contactId: 'c-suma-neighbor',
+          contactId,
           response,
           note: note || (response === 'ok' ? 'Neighbor confirmed elder is OK.' : 'Elder needs assistance.')
         })
@@ -61,17 +81,20 @@ export default function NeighborView() {
       if (!res.ok) throw new Error('Response could not be submitted.');
       {
         setStep('done');
-        setOutcomeMsg(
-          response === 'ok'
-            ? "Thank you Suma! You marked Ammini as fine. Incident closed and logged to timeline."
-            : "Emergency reported! Critical alert sent to ASHA worker and Family."
-        );
+        setToastMsg({
+          message: response === 'ok'
+            ? `Thank you! Marked ${elderName} as safe. Incident resolved.`
+            : `Emergency reported! Alert escalated to ASHA worker & overseas family.`,
+          type: response === 'ok' ? 'success' : 'error',
+        });
         fetchNeighborData();
       }
-      setErrorMessage(null);
     } catch (err) {
       console.error('Error responding:', err);
-      setErrorMessage(err instanceof Error ? err.message : 'Response failed.');
+      setToastMsg({
+        message: err instanceof Error ? err.message : 'Response failed.',
+        type: 'error',
+      });
     } finally {
       setIsResponding(false);
     }
@@ -83,12 +106,11 @@ export default function NeighborView() {
     <div className="min-h-screen bg-surface font-sans text-on-surface pb-12">
       <Navbar />
 
+      <Toast message={toastMsg?.message || null} type={toastMsg?.type} onClose={() => setToastMsg(null)} />
+
       <main className="max-w-md mx-auto px-4 py-6 space-y-6">
-        {errorMessage && <div role="alert" className="bg-error-container text-on-error-container border border-error rounded-xl p-3 text-xs font-bold">{errorMessage}</div>}
         {isLoading ? (
-          <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-8 text-center text-sm font-semibold text-on-surface-variant">
-            Loading nearby care requests…
-          </div>
+          <CardSkeleton />
         ) : (
         <>
         {/* Mobile Header Banner */}
@@ -98,13 +120,31 @@ export default function NeighborView() {
               <span className="material-symbols-outlined text-[28px]">spatial_tracking</span>
             </div>
             <div>
-              <h1 className="font-bold text-lg text-on-primary">Suma Nextdoor</h1>
-              <p className="text-xs text-on-primary-container">Local Volunteer • Ward 4 (#403)</p>
+              <h1 className="font-bold text-lg text-on-primary">{neighborContact?.name || 'Local Neighbor'}</h1>
+              <p className="text-xs text-on-primary-container">Volunteer Response • {elderWard}</p>
             </div>
           </div>
           <span className="text-xs bg-surface-container text-primary px-2.5 py-1 rounded-full font-bold">
             Neighbor Role
           </span>
+        </div>
+
+        {/* 3-Step Mini Progress Stepper */}
+        <div className="flex items-center justify-between rounded-xl bg-surface-container-low p-3 border border-outline-variant/20 text-xs font-bold text-on-surface-variant">
+          <div className={`flex items-center gap-1 ${step === 'idle' ? 'text-primary font-extrabold' : 'text-primary'}`}>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white text-[0.65rem]">1</span>
+            Notified
+          </div>
+          <span className="text-outline-variant">→</span>
+          <div className={`flex items-center gap-1 ${step === 'going' ? 'text-primary font-extrabold' : step === 'done' ? 'text-primary' : 'text-outline-variant'}`}>
+            <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[0.65rem] ${step === 'going' || step === 'done' ? 'bg-primary text-white' : 'bg-outline-variant/30 text-on-surface-variant'}`}>2</span>
+            On the way
+          </div>
+          <span className="text-outline-variant">→</span>
+          <div className={`flex items-center gap-1 ${step === 'done' ? 'text-secondary font-extrabold' : 'text-outline-variant'}`}>
+            <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[0.65rem] ${step === 'done' ? 'bg-secondary text-white' : 'bg-outline-variant/30 text-on-surface-variant'}`}>3</span>
+            Checked in
+          </div>
         </div>
 
         {/* Main Action Card */}
@@ -115,17 +155,17 @@ export default function NeighborView() {
                 <span className="material-symbols-outlined text-[16px]">warning</span>
                 NEIGHBOR CHECK REQUESTED
               </span>
-              <span className="text-xs font-bold text-on-surface-variant">2 mins ago</span>
+              <span className="text-xs font-bold text-on-surface-variant">Active Request</span>
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-2xl font-black text-on-surface">Ammini Amma (78)</h2>
+              <h2 className="text-2xl font-black text-on-surface">{elderName} ({elderAge}y)</h2>
               <p className="text-xs font-semibold text-on-surface-variant flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-secondary text-[16px]">location_on</span>
-                Kunnumpurathu House (Next Door House #402)
+                {elderAddress}
               </p>
               <p className="text-xs text-on-surface-variant bg-surface-container-low p-3 rounded-xl border border-outline-variant/20 leading-relaxed">
-                Smart Pillbox was expected by 08:15 AM but has not been opened yet today. Please take a quick glance over the fence or knock on her door.
+                Smart sensor detected missing signal baseline. Please perform a physical check at the residence and confirm status.
               </p>
             </div>
 
@@ -182,47 +222,42 @@ export default function NeighborView() {
               </p>
             </div>
 
-            {outcomeMsg && (
-              <div className="bg-surface-container text-primary border border-outline-variant/30 rounded-xl p-3.5 text-xs font-semibold text-left">
-                {outcomeMsg}
-              </div>
-            )}
-
             <button
               type="button"
-              disabled={isLoggingVisit}
+              disabled={isResponding}
               onClick={async () => {
-                setIsLoggingVisit(true);
-                setErrorMessage(null);
+                setIsResponding(true);
                 try {
                   const response = await fetch('/api/signals', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      elderId: 'elder-ammini-78',
+                      elderId: incident?.elder_id || 'elder-ammini-78',
                       signalType: 'volunteer_confirmed_ok',
                       source: 'volunteer',
-                      metadata: { note: 'Proactive neighbor glance confirmation by Suma' }
+                      metadata: { note: 'Proactive neighbor glance confirmation' }
                     })
                   });
-                  if (!response.ok) throw new Error('Visit could not be logged. Try again.');
-                  setOutcomeMsg('Visit logged. The care timeline has been updated.');
+                  if (!response.ok) throw new Error('Visit could not be logged.');
+                  setToastMsg({
+                    message: 'Casual visit logged. Care timeline updated.',
+                    type: 'success',
+                  });
                   await fetchNeighborData();
                 } catch (error) {
-                  setErrorMessage(error instanceof Error ? error.message : 'Visit could not be logged.');
+                  setToastMsg({
+                    message: error instanceof Error ? error.message : 'Visit could not be logged.',
+                    type: 'error',
+                  });
                 } finally {
-                  setIsLoggingVisit(false);
+                  setIsResponding(false);
                 }
               }}
-              className="w-full bg-primary text-on-primary font-bold text-sm py-3 rounded-xl hover:bg-primary-container transition-colors min-h-[48px] disabled:cursor-wait disabled:opacity-60"
+              className="w-full bg-primary text-on-primary font-bold text-sm py-3.5 rounded-xl hover:bg-primary-container transition-colors min-h-[52px] disabled:cursor-wait disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              {isLoggingVisit ? 'Logging visit…' : 'Log Proactive Casual Visit (Checked, She’s Fine)'}
+              <span className="material-symbols-outlined text-[20px]">how_to_reg</span>
+              {isResponding ? 'Logging visit…' : 'Log Proactive Casual Visit (Checked, She’s Fine)'}
             </button>
-          </div>
-        )}
-        {outcomeMsg && hasActiveAlert && (
-          <div role="status" className="bg-surface-container text-primary border border-outline-variant/30 rounded-xl p-3.5 text-xs font-semibold">
-            {outcomeMsg}
           </div>
         )}
         </>
