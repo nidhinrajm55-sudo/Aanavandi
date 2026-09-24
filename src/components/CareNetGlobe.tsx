@@ -129,6 +129,11 @@ export function CareNetGlobe({ className = '', onSelectNode, selectedNodeId }: C
   const [mapTheme, setMapTheme] = useState<'street' | 'satellite'>('satellite');
   const [is3D, setIs3D] = useState(true);
 
+  const activeLocalityRef = useRef(activeLocality);
+  useEffect(() => {
+    activeLocalityRef.current = activeLocality;
+  }, [activeLocality]);
+
   const selectedNode = useMemo(() => {
     if (selectedNodeId) {
       return nodes.find((n) => n.id === selectedNodeId) || internalSelectedNode;
@@ -246,7 +251,7 @@ export function CareNetGlobe({ className = '', onSelectNode, selectedNodeId }: C
     const map = mapRef.current;
 
     const spin = () => {
-      if (userInteractingRef.current || !mapRef.current) return;
+      if (userInteractingRef.current || !mapRef.current || activeLocalityRef.current !== 'all') return;
       const zoom = map.getZoom();
       // Only revolve when zoomed out at globe preview level (zoom < 6.5)
       if (zoom < 6.5) {
@@ -394,13 +399,43 @@ export function CareNetGlobe({ className = '', onSelectNode, selectedNodeId }: C
   // Handle locality filter selection
   const handleLocalitySelect = (localityId: string) => {
     setActiveLocality(localityId);
+    userInteractingRef.current = true;
     const loc = KERALA_LOCALITIES.find((l) => l.id === localityId);
     if (!loc || !mapRef.current) return;
 
+    if (localityId === 'all') {
+      handleSelectNode(null);
+      mapRef.current.flyTo({
+        center: loc.center,
+        zoom: loc.zoom,
+        pitch: is3D ? loc.pitch : 0,
+        duration: 1400,
+      });
+      setTimeout(() => {
+        userInteractingRef.current = false;
+      }, 1600);
+      return;
+    }
+
+    // Find matching elder node in this district
+    const matchingNode = nodes.find(
+      (n) =>
+        n.wardId === localityId ||
+        (n.address && n.address.toLowerCase().includes(loc.label.toLowerCase())) ||
+        (n.ward && n.ward.toLowerCase().includes(loc.label.toLowerCase()))
+    );
+
+    const targetCenter = matchingNode ? matchingNode.coordinates : loc.center;
+    const targetZoom = matchingNode ? 14.5 : loc.zoom;
+
+    if (matchingNode) {
+      handleSelectNode(matchingNode);
+    }
+
     mapRef.current.flyTo({
-      center: loc.center,
-      zoom: loc.zoom,
-      pitch: is3D ? loc.pitch : 0,
+      center: targetCenter,
+      zoom: targetZoom,
+      pitch: is3D ? 58 : 0,
       duration: 1400,
     });
   };
